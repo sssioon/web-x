@@ -47,54 +47,6 @@
             background-color: #0056b3;
         }
 
-        .history-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .history-list {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: white;
-            min-width: 450px; /* 设置更宽的最小宽度 */
-            max-width: 500px; /* 设置更宽的最大宽度 */
-            max-height: 500px; /* 限制历史记录列表的高度 */
-            overflow-y: auto;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .history-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f1f1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .delete-button {
-            margin-left: 10px;
-            background-color: red;
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .delete-button:hover {
-            background-color: darkred;
-        }
-
-        .history-list.show {
-            display: block;
-        }
-
         /* 编辑区域自动填充 */
         .editable-area {
             flex: 1;
@@ -112,10 +64,6 @@
             <button id="backButton">返回</button>
             <button id="editButton">编辑</button>
             <button id="saveButton">保存内容</button>
-            <div class="history-dropdown">
-                <button id="historyButton">历史记录</button>
-                <div class="history-list" id="historyList"></div>
-            </div>
         </div>
         <div id="editableContent" class="editable-area" contenteditable="true"></div>
     </div>
@@ -152,7 +100,8 @@
             return doc.documentElement.innerHTML;
         }
 
-        fetch(`/proxy?url=${encodeURIComponent(url)}`)
+        // 使用 Scraper API 获取网页内容
+        fetch(`https://api.scraperapi.com?api_key=YOUR_API_KEY&url=${encodeURIComponent(url)}`)
             .then(response => {
                 if (!response.ok) throw new Error('网络错误');
                 return response.text();
@@ -160,14 +109,6 @@
             .then(html => {
                 const updatedHtml = convertRelativePathsToAbsolute(html, url);
                 document.getElementById('editableContent').innerHTML = updatedHtml;
-
-                const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-                stylesheets.forEach(link => {
-                    const clonedLink = document.createElement('link');
-                    clonedLink.rel = 'stylesheet';
-                    clonedLink.href = link.href;
-                    document.head.appendChild(clonedLink);
-                });
             })
             .catch(err => {
                 console.error('获取网页内容失败:', err);
@@ -189,8 +130,6 @@
             document.getElementById('editableContent').contentEditable = "false";
             document.getElementById('saveButton').disabled = true;
             alert('内容已保存到历史记录！');
-
-            loadHistory();
         });
 
         document.getElementById('editButton').addEventListener('click', () => {
@@ -201,47 +140,6 @@
 
         document.getElementById('backButton').addEventListener('click', () => {
             window.history.back();
-        });
-
-        function loadHistory() {
-            let history = JSON.parse(localStorage.getItem(historyKey)) || [];
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
-
-            history.forEach((item, index) => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                historyItem.innerHTML = `
-                    ${item.name} - ${item.timestamp}
-                    <button class="delete-button" onclick="deleteHistory(event, ${index})">删除</button>
-                `;
-                historyItem.addEventListener('click', () => {
-                    restoreContent(item.content);
-                });
-                historyList.appendChild(historyItem);
-            });
-        }
-
-        function restoreContent(content) {
-            document.getElementById('editableContent').innerHTML = content;
-            document.getElementById('editableContent').contentEditable = "true";
-            document.getElementById('saveButton').disabled = false;
-            document.getElementById('historyList').classList.remove('show');
-            alert('内容已恢复，您可以继续编辑！');
-        }
-
-        function deleteHistory(event, index) {
-            event.stopPropagation();
-            let history = JSON.parse(localStorage.getItem(historyKey)) || [];
-            history.splice(index, 1);
-            localStorage.setItem(historyKey, JSON.stringify(history));
-            loadHistory();
-        }
-
-        document.getElementById('historyButton').addEventListener('click', () => {
-            const historyList = document.getElementById('historyList');
-            historyList.classList.toggle('show');
-            loadHistory();
         });
     </script>
 </body>
