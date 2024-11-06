@@ -19,7 +19,8 @@
         document.getElementById('editButton').addEventListener('click', () => {
             const url = document.getElementById('urlInput').value.trim();
             if (url) {
-                window.location.href = "editor.html?url=" + encodeURIComponent(url);
+                // 跳转到 editor.html，并传递 URL 参数
+                window.location.href = `editor.html?url=${encodeURIComponent(url)}`;
             } else {
                 alert('请输入网址');
             }
